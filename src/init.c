@@ -12,7 +12,9 @@ void booting(void){
     GPIO_Config();  /* GPIO configuration   */
     ADC_Config();   /* ADC configuration    */
     TIM4_Config();  /* TIM4 configuration   */
+#if defined DEBUG
     UART1_Config(); /* UART1 configuration  */
+#endif
 }
 
 
@@ -50,6 +52,7 @@ void CLK_Config(void)
 // //   I2C_GenerateSTART(ENABLE);
 // }
 
+#if defined DEBUG
 /**
   * @brief  Configure UART1 for the synchronous mode communication
   * @param  None
@@ -78,7 +81,7 @@ void UART1_Config(void)
   UART1_ITConfig(UART1_IT_RXNE_OR, ENABLE);
   UART1_Cmd(ENABLE);
 }
-
+#endif
 /**
   * @brief  Configure TIM4 to generate an update interrupt each 1ms 
   * @param  None

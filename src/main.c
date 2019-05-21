@@ -23,48 +23,49 @@ uint16_t tdsValue = 0;
   */
 unsigned char bl_state;
 unsigned char data_value;
-void show_value(unsigned char value);
+void show_value(uint8_t type,uint16_t value);
 void main(void)
 {
     uint8_t i;
     unsigned char s = 0x00;
-  const char txt1[] = {"MICROARENA"};
-  const char txt2[] = {"SShahryiar"};
-  const char txt3[] = {"STM8S003K3"};
-  const char txt4[] = {"Discovery!"};
+    //                    TDS: XXX PPM
+  const char txt1[] = {"  TDS:      PPM "};
+  const char txt2[] = {"!-CLEAN WATER-!"};
+  const char txt3[] = {"!-DIRTY WATER-!"};
+  const char txt4[] = {"!-NO TDS PROBE-!"};
     //booting system
     booting();
     LCD_init();
+    // LCD_clear_home();
+    // LCD_goto(3, 0);
+    // LCD_putstr(txt1);
+    // LCD_goto(3, 1);
+    // LCD_putstr(txt2);
+    // delay(2600);
     LCD_clear_home();
-    LCD_goto(3, 0);
+    // for(s = 0; s < 10; s++)
+    // {
+    //     LCD_goto((3 + s), 0);
+    //     LCD_putchar(txt3[s]);
+    //     delay(60);
+    // }
+    // for(s = 0; s < 10; s++)
+    // {
+    //     LCD_goto((3 + s), 1);
+    //     LCD_putchar(txt4[s]);
+    //     delay(60);
+    // }
+    // delay(2600);
+    // s = 0;s
+    // LCD_clear_home();
+    LCD_goto(0, 0);
     LCD_putstr(txt1);
-    LCD_goto(3, 1);
-    LCD_putstr(txt2);
-    delay(2600);
-    LCD_clear_home();
-    for(s = 0; s < 10; s++)
-    {
-        LCD_goto((3 + s), 0);
-        LCD_putchar(txt3[s]);
-        delay(60);
-    }
-    for(s = 0; s < 10; s++)
-    {
-        LCD_goto((3 + s), 1);
-        LCD_putchar(txt4[s]);
-        delay(60);
-    }
-  delay(2600);
-    s = 0;
-    LCD_clear_home();
-    LCD_goto(3, 0);
-    LCD_putstr(txt1);
-    while(1)
-    {
-        show_value(s);
-        s++;
-        delay(200);
-    };
+    // while(1)
+    // {
+    //     show_value(s);
+    //     s++;
+    //     delay(200);
+    // };
 
 #if defined DEBUG
     while(1)
@@ -107,15 +108,21 @@ void main(void)
         for(i=0;i<TDS_MEASURE_REPEAT;i++){
             delay(500);
             tdsValue=read_tds();
-            if(tdsValue>TDS_LIMIT){
-                // blink_led(TDS_GPIO_PIN,500);  //blink warning led
+            show_value(0,tdsValue);
+            if(tdsValue>TDS_LIMIT){              
+                LCD_goto(0, 1);
+                LCD_putstr(txt3);
             }
             else if(tdsValue < 30){
+                LCD_goto(0, 1);
+                LCD_putstr(txt4);
                 // blink_led(TDS_GPIO_PIN,0);  //turn off tds led
                 // GPIO_WriteBit(TDS_GPIO_PORT, TDS_GPIO_PIN, (BitAction)(0));
             }
             else
             {
+                LCD_goto(0, 1);
+                LCD_putstr(txt2);
                 // blink_led(TDS_GPIO_PIN,0);
                 // GPIO_WriteBit(TDS_GPIO_PORT, TDS_GPIO_PIN, (BitAction)(1));
             }
@@ -153,7 +160,7 @@ int getMedianNum(int* bArray)
 }
 #endif
 
-
+#if defined DEBUG
 /**
   * @brief Retargets the C library printf function to the UART.
   * @param c Character to send
@@ -186,7 +193,7 @@ GETCHAR_PROTOTYPE
     c = UART1_ReceiveData8();
   return (c);
 }
-
+#endif
 
 #if defined ADC
 /**
@@ -211,6 +218,7 @@ uint16_t read_tds(void){
     int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
     float compensationCoefficient;
     float compensationVolatge;
+    uint16_t voltage;
 
     for( analogBufferIndex=0; analogBufferIndex < SCOUNT; analogBufferIndex++)
     {
@@ -221,6 +229,8 @@ uint16_t read_tds(void){
     // read the analog value more stable by the median filtering
     // algorithm, and convert to voltage value
     averageVoltage = getMedianNum(analogBuffer) * (float)VREF / 1024.0;
+    voltage=(uint16_t)(averageVoltage*100);
+    // show_value(1,voltage);
     //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0));
     compensationCoefficient=1.0+0.02*(temperature-25.0);
     compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
@@ -230,22 +240,27 @@ uint16_t read_tds(void){
     //  b = 255.86
     //  c = 857.39
     // ppm_value=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
-    ppm_value = (uint16_t)(110*compensationVolatge*compensationVolatge + 169*compensationVolatge -1);
+    ppm_value = (uint16_t)(140.69*compensationVolatge*compensationVolatge + 118.31*compensationVolatge +10.095);
     return ppm_value;
 }
 #endif
 
-void show_value(unsigned char value)
+//type 0: tds value
+//type 1: voltage value
+void show_value(uint8_t type,uint16_t value)
 {
    char ch = 0x00;
-   ch = ((value / 100) + 0x30);
-   LCD_goto(6, 1);
+   ch = ((value / 1000) + 0x30);
+   LCD_goto(7, type);
+   LCD_putchar(ch);
+   ch = (((value / 100) % 10) + 0x30);
+   LCD_goto(8, type);
    LCD_putchar(ch);
    ch = (((value / 10) % 10) + 0x30);
-   LCD_goto(7, 1);
+   LCD_goto(9, type);
    LCD_putchar(ch);
    ch = ((value % 10) + 0x30);
-   LCD_goto(8, 1);
+   LCD_goto(10, type);
    LCD_putchar(ch);
 }
 
