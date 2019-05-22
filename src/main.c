@@ -30,42 +30,17 @@ void main(void)
     unsigned char s = 0x00;
     //                    TDS: XXX PPM
   const char txt1[] = {"  TDS:      PPM "};
-  const char txt2[] = {"!-CLEAN WATER-!"};
-  const char txt3[] = {"!-DIRTY WATER-!"};
-  const char txt4[] = {"!-NO TDS PROBE-!"};
+  const char txt2[] = {"   CLEAN WATER  "};
+  const char txt3[] = {"   DIRTY WATER  "};
+  const char txt4[] = {"    NO WATER    "};
+  const char txt5[] = {"                "};
+  const char txt6[] = {"   OVER RANGE   "};
     //booting system
     booting();
     LCD_init();
-    // LCD_clear_home();
-    // LCD_goto(3, 0);
-    // LCD_putstr(txt1);
-    // LCD_goto(3, 1);
-    // LCD_putstr(txt2);
-    // delay(2600);
     LCD_clear_home();
-    // for(s = 0; s < 10; s++)
-    // {
-    //     LCD_goto((3 + s), 0);
-    //     LCD_putchar(txt3[s]);
-    //     delay(60);
-    // }
-    // for(s = 0; s < 10; s++)
-    // {
-    //     LCD_goto((3 + s), 1);
-    //     LCD_putchar(txt4[s]);
-    //     delay(60);
-    // }
-    // delay(2600);
-    // s = 0;s
-    // LCD_clear_home();
     LCD_goto(0, 0);
     LCD_putstr(txt1);
-    // while(1)
-    // {
-    //     show_value(s);
-    //     s++;
-    //     delay(200);
-    // };
 
 #if defined DEBUG
     while(1)
@@ -106,21 +81,37 @@ void main(void)
     {
 #if defined ADC
         for(i=0;i<TDS_MEASURE_REPEAT;i++){
-            delay(500);
+            // delay(500);
             tdsValue=read_tds();
-            show_value(0,tdsValue);
-            if(tdsValue>TDS_LIMIT){              
+            if(tdsValue>TDS_OVERLOAD){              
+                show_value(0,tdsValue);
+                LCD_goto(0, 1);
+                LCD_putstr(txt6);
+                delay(500);
+                LCD_goto(0, 1);
+                LCD_putstr(txt5);
+            }
+            else if( (tdsValue>TDS_LIMIT) && (tdsValue<=TDS_OVERLOAD) ){              
+                show_value(0,tdsValue);
                 LCD_goto(0, 1);
                 LCD_putstr(txt3);
+                delay(500);
+                LCD_goto(0, 1);
+                LCD_putstr(txt5);
             }
-            else if(tdsValue < 30){
+            else if(tdsValue < 5){
+                show_value(0,0);
                 LCD_goto(0, 1);
                 LCD_putstr(txt4);
+                delay(500);
+                LCD_goto(0, 1);
+                LCD_putstr(txt5);
                 // blink_led(TDS_GPIO_PIN,0);  //turn off tds led
                 // GPIO_WriteBit(TDS_GPIO_PORT, TDS_GPIO_PIN, (BitAction)(0));
             }
             else
             {
+                show_value(0,tdsValue);
                 LCD_goto(0, 1);
                 LCD_putstr(txt2);
                 // blink_led(TDS_GPIO_PIN,0);
@@ -214,11 +205,11 @@ uint16_t read_adc(void)
   */
 uint16_t read_tds(void){
     uint8_t analogBufferIndex;
-    uint16_t ppm_value=0;
     int analogBuffer[SCOUNT];    // store the analog value in the array, read from ADC
     float compensationCoefficient;
     float compensationVolatge;
-    uint16_t voltage;
+    float ppmf;
+    // uint16_t voltage;
 
     for( analogBufferIndex=0; analogBufferIndex < SCOUNT; analogBufferIndex++)
     {
@@ -229,19 +220,18 @@ uint16_t read_tds(void){
     // read the analog value more stable by the median filtering
     // algorithm, and convert to voltage value
     averageVoltage = getMedianNum(analogBuffer) * (float)VREF / 1024.0;
-    voltage=(uint16_t)(averageVoltage*100);
-    // show_value(1,voltage);
     //temperature compensation formula: fFinalResult(25^C) = fFinalResult(current)/(1.0+0.02*(fTP-25.0));
     compensationCoefficient=1.0+0.02*(temperature-25.0);
     compensationVolatge=averageVoltage/compensationCoefficient;  //temperature compensation
+    // voltage=(uint16_t)(compensationVolatge*100);
+    // show_value(1,voltage);
     //convert voltage value to tds value
-    // (a.x^3 + b.x^2 + c.x)/2
-    //  a = 133.42
-    //  b = 255.86
-    //  c = 857.39
-    // ppm_value=(uint16_t)((133.42*compensationVolatge*compensationVolatge*compensationVolatge - 255.86*compensationVolatge*compensationVolatge + 857.39*compensationVolatge)*0.5);
-    ppm_value = (uint16_t)(140.69*compensationVolatge*compensationVolatge + 118.31*compensationVolatge +10.095);
-    return ppm_value;
+    //a.x^3 + b.x^2 + c.x +d
+    ppmf = (float)(14.467*compensationVolatge*compensationVolatge*compensationVolatge - 13.544*compensationVolatge*compensationVolatge + 320.05*compensationVolatge - 9.169);
+    if (ppmf <=0)
+        return 0;
+    else
+        return (uint16_t)ppmf;
 }
 #endif
 

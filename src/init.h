@@ -15,13 +15,14 @@
 #define TDS_GPIO_PIN   (GPIO_PIN_2)         //pin use to turn on/off module SIM
 #define TIM4_PERIOD       124               //1ms
 #define TDS_LIMIT 500                       //watermark value for TDS
+#define TDS_OVERLOAD    1000
 #if defined DEBUG
 #define UART_BUFFER 160                     //255 charactor for UART buffer
 #endif
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 #define VREF 3.3                            // analog reference voltage(Volt) of the ADC
-#define SCOUNT  30                          // sum of sample point
+#define SCOUNT  10                          // sum of sample point
 
 #define TDS_MEASURE_REPEAT 10               //repeat measuring TDS n times to make sure the water is really dirty
 

@@ -332,7 +332,7 @@ INTERRUPT_HANDLER(TIM1_CAP_COM_IRQHandler, 12)
 //  if (TxCounter == TX_BUFFER_SIZE)
 //  {
 //    /* Disable the USART Transmit Complete interrupt */
-   UART1_ITConfig(UART1_IT_TXE, DISABLE);
+//    UART1_ITConfig(UART1_IT_TXE, DISABLE);
 //  }
      // UART1_ClearFlag(UART1_IT_TXE);
 }

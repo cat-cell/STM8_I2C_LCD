@@ -32,25 +32,6 @@ void CLK_Config(void)
     CLK_PeripheralClockConfig(CLK_PERIPHERAL_I2C, ENABLE);
 }
 
-/**
-  * @brief  Configure i2c module
-  * @param  None
-  * @retval None
-  */
-// static void I2C_Config(void)
-// {
-
-//     GPIO_Init(I2C_GPIO_PORT,
-//               ((GPIO_Pin_TypeDef)(I2C_SCL_PINS | I2C_SDA_PINS)),
-//               GPIO_MODE_OUT_PP_HIGH_FAST);
-//     /* I2C Initialize */
-//     I2C_DeInit();
-//     I2C_Init(I2C_SPEED, 0xA0, I2C_DUTYCYCLE_2, I2C_ACK_CURR, I2C_ADDMODE_7BIT, 16);
-//     I2C_Cmd(ENABLE);
-//   /* Enable Buffer and Event Interrupt*/
-// //   I2C_ITConfig((I2C_IT_TypeDef)(I2C_IT_EVT | I2C_IT_BUF) , ENABLE);
-// //   I2C_GenerateSTART(ENABLE);
-// }
 
 #if defined DEBUG
 /**
